@@ -24,8 +24,10 @@ class Storage:
     def connect(self) -> Iterator[sqlite3.Connection]:
         """Yield a configured SQLite connection."""
 
-        connection = sqlite3.connect(self.db_path)
+        connection = sqlite3.connect(self.db_path, timeout=30)
         connection.row_factory = sqlite3.Row
+        connection.execute("PRAGMA journal_mode=WAL")
+        connection.execute("PRAGMA busy_timeout=30000")
         try:
             yield connection
             connection.commit()

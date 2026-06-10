@@ -10,6 +10,7 @@ from typing import Any
 import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
+from loguru import logger
 
 from config import Settings, configure_logging
 from dashboard.control import ControlInterpreter
@@ -19,14 +20,19 @@ from strategies.technical import get_asset_class
 
 
 async def _run_bot() -> None:
-    """Run the trading bot loop until the process exits."""
+    """Run the trading bot loop, restarting on unhandled errors."""
 
     configure_logging()
-    settings = Settings.from_env()
-    bot = TradingBot(settings)
-    if not bot.storage.get_state("briefing_complete", False):
-        await bot.run_premarket_briefing()
-    await bot.run()
+    while True:
+        try:
+            settings = Settings.from_env()
+            bot = TradingBot(settings)
+            if not bot.storage.get_state("briefing_complete", False):
+                await bot.run_premarket_briefing()
+            await bot.run()
+        except Exception:
+            logger.exception("Trading bot loop crashed; restarting in 30s.")
+            await asyncio.sleep(30)
 
 
 @st.cache_resource(show_spinner=False)
