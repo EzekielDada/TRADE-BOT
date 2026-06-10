@@ -4,13 +4,19 @@ from __future__ import annotations
 
 import asyncio
 import json
+import sys
 import threading
+from pathlib import Path
 from typing import Any
 
 import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
 from loguru import logger
+
+# Streamlit only adds this file's directory to sys.path, but the project
+# modules (config, main, storage, strategies, ...) live in the parent dir.
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from config import Settings, configure_logging
 from dashboard.control import ControlInterpreter
