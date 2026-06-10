@@ -1,0 +1,54 @@
+################################################################################
+# CORE TRADING FRAMEWORK (using flexible versions for Python 3.14)
+################################################################################
+ccxt>=4.0                           # Unified exchange API
+pandas>=2.1.0                       # Data manipulation
+pandas-ta==0.4.71b0                 # Technical analysis indicators
+numpy>=1.24                         # Numerical computing
+scipy>=1.10                         # Scientific computing
+
+################################################################################
+# AI & LLM SERVICES
+################################################################################
+groq>=0.4                           # Groq API client
+google-genai>=1.0                   # Google Gemini API client (new SDK)
+
+################################################################################
+# NEWS & SOCIAL SENTIMENT
+################################################################################
+newsapi-python>=0.1                 # NewsAPI client
+pytrends>=4.9                       # Google Trends scraper
+requests>=2.28                      # HTTP requests with retries
+rapidfuzz>=2.0                      # Fuzzy string matching for headlines
+
+################################################################################
+# DASHBOARD & VISUALIZATION
+################################################################################
+streamlit>=1.28                     # Web app framework
+plotly>=5.0                         # Interactive charts
+
+################################################################################
+# BACKTESTING
+################################################################################
+backtrader>=1.9                     # Backtesting framework
+reportlab>=4.0                      # PDF report generation
+
+################################################################################
+# ASYNC & CONCURRENCY
+################################################################################
+aiohttp>=3.8                        # Async HTTP client
+asyncio-throttle>=1.0               # Rate limiting for async
+
+################################################################################
+# DATA PERSISTENCE
+################################################################################
+sqlalchemy>=2.0                     # SQL ORM
+python-dotenv>=1.0                  # Environment variable loading
+
+################################################################################
+# UTILITIES
+################################################################################
+loguru>=0.7                         # Structured logging
+schedule>=1.2                       # Job scheduling
+pytz>=2023.0                        # Timezone support
+aiofiles>=23.0                      # Async file I/O
