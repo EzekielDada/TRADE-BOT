@@ -8,6 +8,8 @@ services:
     envVars:
       - key: PYTHON_VERSION
         value: 3.12.7
+      - key: PYTHONUNBUFFERED
+        value: "1"
 
       # --- Required secrets: set these in the Render dashboard ---
       - key: GROQ_API_KEY

@@ -223,7 +223,7 @@ def configure_logging() -> None:
 
     logger.remove()
     base_format = "{time:YYYY-MM-DD HH:mm:ss ZZ} | {level} | {module}:{function} | {message}"
-    logger.add(sink=lambda msg: print(msg, end=""), format=base_format, level="INFO")
+    logger.add(sink=lambda msg: print(msg, end="", flush=True), format=base_format, level="INFO")
     logger.add(LOG_DIR / "bot.log", format=base_format, rotation="1 day", retention="30 days", level="INFO")
     logger.add(
         LOG_DIR / "trades.log",
