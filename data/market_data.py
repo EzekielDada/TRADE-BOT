@@ -21,6 +21,7 @@ except ImportError:  # pragma: no cover - optional dependency.
 
 
 BYBIT_INTERVAL_MAP = {"15m": "15", "1h": "60", "4h": "240"}
+CRYPTOCOMPARE_INTERVAL_MAP = {"15m": ("histominute", 15), "1h": ("histohour", 1), "4h": ("histohour", 4)}
 
 
 @dataclass(slots=True)
@@ -86,6 +87,14 @@ class MarketDataService:
                 logger.warning(f"Exchange fetch failed for {symbol} {timeframe}: {self.settings.exchange} failed with {error}")
 
         try:
+            candles = await self._fetch_cryptocompare(symbol, timeframe, limit)
+            self.storage.insert_candles("cryptocompare", symbol, timeframe, candles)
+            return pd.DataFrame(candles, columns=["timestamp", "open", "high", "low", "close", "volume"])
+        except Exception as error:  # pragma: no cover - network dependent.
+            last_error = error
+            logger.warning(f"CryptoCompare fetch failed for {symbol} {timeframe}: {error}")
+
+        try:
             candles = await self._fetch_bybit_public(symbol, timeframe, limit)
             self.storage.insert_candles("bybit_public", symbol, timeframe, candles)
             return pd.DataFrame(candles, columns=["timestamp", "open", "high", "low", "close", "volume"])
@@ -148,8 +157,11 @@ class MarketDataService:
         try:
             return await asyncio.to_thread(_load)
         except Exception:
-            frame = await self.fetch_candles(symbol, self.settings.entry_timeframe, limit=2)
-            return float(frame.iloc[-1]["close"])
+            try:
+                return await self._fetch_cryptocompare_price(symbol)
+            except Exception:
+                frame = await self.fetch_candles(symbol, self.settings.entry_timeframe, limit=2)
+                return float(frame.iloc[-1]["close"])
 
     async def close(self) -> None:
         """Close any underlying exchange sessions."""
@@ -164,6 +176,57 @@ class MarketDataService:
             return await exchange.fetch_ohlcv(symbol, timeframe=timeframe, limit=limit)
 
         return await with_retry(_call, attempts=3, base_delay=1.5)
+
+    async def _fetch_cryptocompare(self, symbol: str, timeframe: str, limit: int) -> list[list[float]]:
+        """Fetch public OHLCV data from CryptoCompare."""
+
+        endpoint, aggregate = CRYPTOCOMPARE_INTERVAL_MAP[timeframe]
+        base, quote = symbol.split("/")
+        url = f"https://min-api.cryptocompare.com/data/v2/{endpoint}"
+        params = {"fsym": base, "tsym": quote, "limit": limit, "aggregate": aggregate}
+        headers = {"Authorization": f"Apikey {self.settings.cryptocompare_api_key}"} if self.settings.cryptocompare_api_key else {}
+
+        def _load() -> list[list[float]]:
+            response = requests.get(url, params=params, headers=headers, timeout=15)
+            response.raise_for_status()
+            payload = response.json()
+            if payload.get("Response") == "Error":
+                raise ExternalServiceError(f"CryptoCompare error for {symbol} {timeframe}: {payload.get('Message')}")
+            rows = payload.get("Data", {}).get("Data", [])
+            if not rows:
+                raise ExternalServiceError(f"No CryptoCompare candles for {symbol} {timeframe}")
+            candles = [
+                [
+                    int(row["time"]) * 1000,
+                    float(row["open"]),
+                    float(row["high"]),
+                    float(row["low"]),
+                    float(row["close"]),
+                    float(row["volumefrom"]),
+                ]
+                for row in rows
+            ]
+            return candles
+
+        return await asyncio.to_thread(_load)
+
+    async def _fetch_cryptocompare_price(self, symbol: str) -> float:
+        """Fetch the latest public price from CryptoCompare."""
+
+        base, quote = symbol.split("/")
+        url = "https://min-api.cryptocompare.com/data/price"
+        params = {"fsym": base, "tsyms": quote}
+        headers = {"Authorization": f"Apikey {self.settings.cryptocompare_api_key}"} if self.settings.cryptocompare_api_key else {}
+
+        def _load() -> float:
+            response = requests.get(url, params=params, headers=headers, timeout=10)
+            response.raise_for_status()
+            payload = response.json()
+            if quote not in payload:
+                raise ExternalServiceError(f"No CryptoCompare price for {symbol}")
+            return float(payload[quote])
+
+        return await asyncio.to_thread(_load)
 
     async def _fetch_bybit_public(self, symbol: str, timeframe: str, limit: int) -> list[list[float]]:
         """Fetch public OHLCV data directly from Bybit REST."""
