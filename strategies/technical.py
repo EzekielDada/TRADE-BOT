@@ -12,11 +12,6 @@ from config import Settings
 from models import TechnicalSignal
 from utils import clamp
 
-try:
-    import pandas_ta as ta
-except ImportError:  # pragma: no cover - optional dependency.
-    ta = None  # type: ignore[assignment]
-
 
 def _ema(series: pd.Series, period: int) -> pd.Series:
     """Return an exponential moving average."""

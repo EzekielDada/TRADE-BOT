@@ -22,7 +22,6 @@ def check_dependencies() -> bool:
     dependencies = [
         ("ccxt", "Exchange API"),
         ("pandas", "Data processing"),
-        ("pandas_ta", "Technical indicators"),
         ("groq", "Groq API client"),
         ("google.generativeai", "Gemini API client"),
         ("newsapi", "NewsAPI client"),
