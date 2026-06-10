@@ -1,0 +1,38 @@
+services:
+  - type: web
+    name: trade-bot
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: streamlit run dashboard/app.py --server.port $PORT --server.address 0.0.0.0 --server.headless true
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.7
+
+      # --- Required secrets: set these in the Render dashboard ---
+      - key: GROQ_API_KEY
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: BYBIT_API_KEY
+        sync: false
+      - key: BYBIT_SECRET
+        sync: false
+
+      # --- Optional secrets ---
+      - key: NEWSAPI_KEY
+        sync: false
+      - key: CRYPTOCOMPARE_API_KEY
+        sync: false
+
+      # --- Safe defaults (override in Render dashboard if needed) ---
+      - key: PAPER_TRADING
+        value: "true"
+      - key: BYBIT_TESTNET
+        value: "true"
+      - key: EXCHANGE
+        value: bybit
+      - key: SYMBOLS
+        value: BTC/USDT,ETH/USDT
+      - key: TIMEZONE
+        value: Africa/Lagos

@@ -2,17 +2,39 @@
 
 from __future__ import annotations
 
+import asyncio
 import json
+import threading
 from typing import Any
 
 import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
 
-from config import Settings
+from config import Settings, configure_logging
 from dashboard.control import ControlInterpreter
+from main import TradingBot
 from storage import Storage
 from strategies.technical import get_asset_class
+
+
+async def _run_bot() -> None:
+    """Run the trading bot loop until the process exits."""
+
+    configure_logging()
+    settings = Settings.from_env()
+    bot = TradingBot(settings)
+    if not bot.storage.get_state("briefing_complete", False):
+        await bot.run_premarket_briefing()
+    await bot.run()
+
+
+@st.cache_resource(show_spinner=False)
+def _start_bot_loop() -> bool:
+    """Start the trading bot loop in a background thread (once per process)."""
+
+    threading.Thread(target=lambda: asyncio.run(_run_bot()), name="trading-bot-loop", daemon=True).start()
+    return True
 
 
 def _load_candles(storage: Storage, symbol: str, timeframe: str) -> pd.DataFrame:
@@ -56,6 +78,7 @@ def render_dashboard() -> None:
     """Render the Streamlit application."""
 
     settings = Settings.from_env()
+    _start_bot_loop()
     storage = Storage(settings.sqlite_path)
     control = ControlInterpreter(settings, storage)
 

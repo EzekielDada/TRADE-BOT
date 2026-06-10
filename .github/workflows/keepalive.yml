@@ -1,0 +1,18 @@
+name: Keep Render service awake
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping deployed dashboard
+        run: |
+          if [ -z "${{ secrets.RENDER_APP_URL }}" ]; then
+            echo "RENDER_APP_URL secret not set, skipping."
+            exit 0
+          fi
+          curl -fsS --max-time 30 "${{ secrets.RENDER_APP_URL }}" > /dev/null

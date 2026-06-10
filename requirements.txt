@@ -52,3 +52,9 @@ loguru>=0.7                         # Structured logging
 schedule>=1.2                       # Job scheduling
 pytz>=2023.0                        # Timezone support
 aiofiles>=23.0                      # Async file I/O
+
+################################################################################
+# TESTING
+################################################################################
+pytest>=8.0                         # Test runner
+pytest-asyncio>=0.26                # Async test support
